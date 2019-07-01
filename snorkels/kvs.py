@@ -1,0 +1,101 @@
+"""
+   Copyright 2019 Yann Dumont
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+"""
+
+
+__all__ = ('KeyValueStore', 'KVSError', 'CompressionError', 'DecompressionError')
+
+
+from .util import validateType
+from typing import Union, Optional, List
+from zlib import compress, decompress, Z_DEFAULT_COMPRESSION, Z_BEST_COMPRESSION
+from zlib import error as ZLibError
+from pickle import dumps as pickleDumps
+from pickle import loads as pickleLoads
+
+
+class KVSError(Exception):
+    pass
+
+
+class CompressionError(KVSError):
+    pass
+
+
+class DecompressionError(KVSError):
+    pass
+
+
+class KeyValueStore:
+    def __init__(self, compression_lvl: Optional[int] = None, encoding: str = "UTF-8"):
+        self.__compr_lvl = compression_lvl or Z_DEFAULT_COMPRESSION
+        self.__encoding = encoding
+        self.__store = dict()
+
+    def __setitem__(self, key: Union[str, int, float, bytes], value: Union[str, bytes]) -> None:
+        self.set(key, value)
+
+    def __getitem__(self, item: Union[str, int, float, bytes]) -> str:
+        return self.get(item)
+
+    def __delitem__(self, key: Union[str, int, float, bytes]) -> None:
+        self.delete(key)
+
+    def __compress(self, value: bytes) -> bytes:
+        try:
+            return compress(value, self.__compr_lvl)
+        except ZLibError as ex:
+            raise CompressionError(ex)
+
+    def __decompress(self, value: bytes) -> bytes:
+        try:
+            return decompress(value)
+        except ZLibError as ex:
+            raise DecompressionError(ex)
+
+    def set(self, key: Union[str, int, float, bytes], value: Union[str, bytes]) -> None:
+        validateType(key, "key", (str, int, float, bytes))
+        validateType(value, "value", (str, bytes))
+        if isinstance(value, str):
+            value = bytes(value, self.__encoding)
+        self.__store[key] = self.__compress(value)
+
+    def get(self, key: Union[str, int, float, bytes]) -> str:
+        validateType(key, "key", (str, int, float, bytes))
+        return str(self.__decompress(self.__store[key]), encoding=self.__encoding)
+
+    def delete(self, key: Union[str, int, float, bytes]) -> None:
+        validateType(key, "key", (str, int, float, bytes))
+        del self.__store[key]
+
+    def keys(self) -> List:
+        return list(self.__store.keys())
+
+    def values(self) -> List:
+        return [str(self.__decompress(value), encoding=self.__encoding) for value in self.__store.values()]
+
+    def clear(self) -> None:
+        self.__store.clear()
+
+    def dump(self, n, c=True):
+        with open(n, "ba") as file:
+            for key, value in self.__store.items():
+                file.write(pickleDumps((key, value)))
+        del file
+
+
+    def load(self):
+        with open("test.kvs", "br") as file:
+            return pickleLoads(decompress(file.read()))
