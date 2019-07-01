@@ -14,7 +14,7 @@
    limitations under the License.
 """
 
-__version__ = '0.0.0'
+__version__ = '0.0.1'
 __title__ = 'SNORKELS'
 __description__ = 'A lightweight in memory key-value store with on the fly compression.'
 __url__ = 'https://github.com/y-du/snorkels'

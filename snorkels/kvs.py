@@ -89,6 +89,17 @@ class KeyValueStore:
     def clear(self) -> None:
         self.__store.clear()
 
+    def __repr__(self):
+        size = 0
+        for value in self.__store.values():
+            size += len(value)
+        size = size / 1024
+        attributes = [
+            ('keys', len(self.__store.keys())),
+            ('size', "{}KiB".format(round(size)))
+        ]
+        return "{}({})".format(__class__.__name__, ", ".join(["=".join([key, str(value)]) for key, value in attributes]))
+
     def dump(self, n, c=True):
         with open(n, "ba") as file:
             for key, value in self.__store.items():
