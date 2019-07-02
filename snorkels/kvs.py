@@ -71,19 +71,25 @@ class KeyValueStore:
         except ZLibError as ex:
             raise DecompressionError(ex)
 
-    def set(self, key: Union[str, int, float, bytes], value: Union[str, bytes]) -> None:
-        validateType(key, "key", (str, int, float, bytes))
-        validateType(value, "value", (str, bytes))
+    def set(self, key: Union[str, bytes], value: Union[str, bytes]) -> None:
+        validateStrOrByt(key, "key")
+        validateStrOrByt(value, "value")
+        if isinstance(key, str):
+            key = bytes(key, self.__encoding)
         if isinstance(value, str):
             value = bytes(value, self.__encoding)
         self.__store[key] = self.__compress(value)
 
-    def get(self, key: Union[str, int, float, bytes]) -> str:
-        validateType(key, "key", (str, int, float, bytes))
-        return str(self.__decompress(self.__store[key]), encoding=self.__encoding)
+    def get(self, key: Union[str, bytes]) -> bytes:
+        validateStrOrByt(key, "key")
+        if isinstance(key, str):
+            key = bytes(key, self.__encoding)
+        return self.__decompress(self.__store[key])
 
-    def delete(self, key: Union[str, int, float, bytes]) -> None:
-        validateType(key, "key", (str, int, float, bytes))
+    def delete(self, key: Union[str, bytes]) -> None:
+        validateStrOrByt(key, "key")
+        if isinstance(key, str):
+            key = bytes(key, self.__encoding)
         del self.__store[key]
 
     def keys(self) -> List:
