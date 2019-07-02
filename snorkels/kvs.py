@@ -50,15 +50,6 @@ class KeyValueStore:
         self.__store = dict()
         self.__lock = Lock()
 
-    def __setitem__(self, key: Union[str, bytes], value: Union[str, bytes]) -> None:
-        self.set(key, value)
-
-    def __getitem__(self, item: Union[str, bytes]) -> bytes:
-        return self.get(item)
-
-    def __delitem__(self, key: Union[str, bytes]) -> None:
-        self.delete(key)
-
     def __compress(self, value: bytes) -> bytes:
         try:
             return compress(value, self.__compr_lvl)
