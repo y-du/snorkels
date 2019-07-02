@@ -26,6 +26,11 @@ from zlib import error as ZLibError
 from os import path
 from inspect import getfile, stack
 from threading import Thread, Lock
+from logging import getLogger
+
+
+_root_logger = getLogger('snorkels')
+_root_logger.propagate = False
 
 
 class KVSError(Exception):
@@ -50,6 +55,7 @@ class KeyValueStore:
         self.__encoding = encoding
         self.__store = dict()
         self.__lock = Lock()
+        self.__logger = _root_logger.getChild(self.__db_name)
         self.__load()
 
     def set(self, key: Union[str, bytes], value: Union[str, bytes]) -> None:
@@ -88,7 +94,7 @@ class KeyValueStore:
             with open(path.join(self.__path, "{}.kvs".format(self.__db_name)), "w") as file:
                 for key, value in self.__store.items():
                     file.write(key.hex() + ":" + value.hex() + "\n")
-        print("dumped")
+            self.__logger.info("Dumped data to '{}'".format(path.join(self.__path, "{}.kvs".format(self.__db_name))))
 
     def __load(self):
         try:
@@ -96,7 +102,7 @@ class KeyValueStore:
                 for line in file:
                     key, value = line.split(":")
                     self.__store[bytes.fromhex(key)] = bytes.fromhex(value)
-            print("loaded")
+            self.__logger.info("Loaded data from '{}'".format(path.join(self.__path, "{}.kvs".format(self.__db_name))))
         except FileNotFoundError:
             pass
 
