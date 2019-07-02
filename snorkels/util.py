@@ -18,9 +18,6 @@
 __all__ = ('validateStrOrByt',)
 
 
-from typing import Union
-
-
 def validateStrOrByt(obj: object, name: str) -> None:
     if not isinstance(obj, (str, bytes)):
         err = TypeError("invalid type '{}' for {}".format(type(obj).__name__, name))
