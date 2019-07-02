@@ -95,9 +95,6 @@ class KeyValueStore:
     def keys(self) -> List:
         return list(self.__store.keys())
 
-    def values(self) -> List:
-        return [str(self.__decompress(value), encoding=self.__encoding) for value in self.__store.values()]
-
     def clear(self) -> None:
         self.__store.clear()
 
