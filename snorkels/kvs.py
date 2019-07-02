@@ -39,7 +39,11 @@ class DecompressionError(KVSError):
 
 
 class KeyValueStore:
-    def __init__(self, compression_lvl: Optional[int] = None, encoding: str = "UTF-8"):
+    def __init__(self, db_name: str, user_path: str = None, compression_lvl: Optional[int] = None, encoding: str = "UTF-8"):
+        if not all((isinstance(db_name, str), isinstance(user_path, (str, type(None))), isinstance(compression_lvl, (int, type(None))), isinstance(encoding, str))):
+            raise TypeError
+        self.__db_name = db_name
+        self.__path = user_path if user_path else path.abspath(path.split(getfile(stack()[-1].frame))[0])
         self.__compr_lvl = compression_lvl or Z_DEFAULT_COMPRESSION
         self.__encoding = encoding
         self.__store = dict()
