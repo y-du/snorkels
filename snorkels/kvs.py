@@ -19,8 +19,9 @@ __all__ = ('KeyValueStore', 'KVSError', 'CompressionError', 'DecompressionError'
 
 
 from .util import validateStrOrByt
-from typing import Union, Optional, List
-from zlib import compress, decompress, Z_DEFAULT_COMPRESSION, Z_BEST_COMPRESSION
+from typing import Union, List
+from zlib import compress, decompress
+from zlib import Z_DEFAULT_COMPRESSION as DEFAULT_LVL
 from zlib import error as ZLibError
 from os import path
 from inspect import getfile, stack
@@ -40,28 +41,16 @@ class DecompressionError(KVSError):
 
 
 class KeyValueStore:
-    def __init__(self, db_name: str, user_path: str = None, compression_lvl: Optional[int] = None, encoding: str = "UTF-8"):
+    def __init__(self, db_name: str, user_path: str = None, compression_lvl: int = DEFAULT_LVL, encoding: str = "UTF-8"):
         if not all((isinstance(db_name, str), isinstance(user_path, (str, type(None))), isinstance(compression_lvl, (int, type(None))), isinstance(encoding, str))):
             raise TypeError
         self.__db_name = db_name
         self.__path = user_path if user_path else path.abspath(path.split(getfile(stack()[-1].frame))[0])
-        self.__compr_lvl = compression_lvl or Z_DEFAULT_COMPRESSION
+        self.__compr_lvl = compression_lvl
         self.__encoding = encoding
         self.__store = dict()
         self.__lock = Lock()
         self.__load()
-
-    def __compress(self, value: bytes) -> bytes:
-        try:
-            return compress(value, self.__compr_lvl)
-        except ZLibError as ex:
-            raise CompressionError(ex)
-
-    def __decompress(self, value: bytes) -> bytes:
-        try:
-            return decompress(value)
-        except ZLibError as ex:
-            raise DecompressionError(ex)
 
     def set(self, key: Union[str, bytes], value: Union[str, bytes]) -> None:
         validateStrOrByt(key, "key")
@@ -90,6 +79,39 @@ class KeyValueStore:
     def clear(self) -> None:
         self.__store.clear()
 
+    def dump(self):
+        dump_thread = Thread(target=self.__dump)
+        dump_thread.start()
+
+    def __dump(self):
+        with self.__lock:
+            with open(path.join(self.__path, "{}.kvs".format(self.__db_name)), "w") as file:
+                for key, value in self.__store.items():
+                    file.write(key.hex() + ":" + value.hex() + "\n")
+        print("dumped")
+
+    def __load(self):
+        try:
+            with open(path.join(self.__path, "{}.kvs".format(self.__db_name)), "r") as file:
+                for line in file:
+                    key, value = line.split(":")
+                    self.__store[bytes.fromhex(key)] = bytes.fromhex(value)
+            print("loaded")
+        except FileNotFoundError:
+            pass
+
+    def __compress(self, value: bytes) -> bytes:
+        try:
+            return compress(value, self.__compr_lvl)
+        except ZLibError as ex:
+            raise CompressionError(ex)
+
+    def __decompress(self, value: bytes) -> bytes:
+        try:
+            return decompress(value)
+        except ZLibError as ex:
+            raise DecompressionError(ex)
+
     def __repr__(self):
         size = 0
         for value in self.__store.values():
@@ -103,24 +125,3 @@ class KeyValueStore:
             ("size", "{}KiB".format(round(size)))
         ]
         return "{}({})".format(__class__.__name__, ", ".join(["=".join([key, str(value)]) for key, value in attributes]))
-
-    def __dump(self):
-        with self.__lock:
-            with open(path.join(self.__path, "{}.kvs".format(self.__db_name)), "w") as file:
-                for key, value in self.__store.items():
-                    file.write(key.hex() + ":" + value.hex() + "\n")
-        print("dumped")
-
-    def dump(self):
-        dump_thread = Thread(target=self.__dump)
-        dump_thread.start()
-
-    def __load(self):
-        try:
-            with open(path.join(self.__path, "{}.kvs".format(self.__db_name)), "r") as file:
-                for line in file:
-                    key, value = line.split(":")
-                    self.__store[bytes.fromhex(key)] = bytes.fromhex(value)
-            print("loaded")
-        except FileNotFoundError:
-            pass
