@@ -18,12 +18,13 @@
 __all__ = ('KeyValueStore', 'KVSError', 'CompressionError', 'DecompressionError')
 
 
-from .util import validateType
+from .util import validateStrOrByt
 from typing import Union, Optional, List
 from zlib import compress, decompress, Z_DEFAULT_COMPRESSION, Z_BEST_COMPRESSION
 from zlib import error as ZLibError
-from pickle import dumps as pickleDumps
-from pickle import loads as pickleLoads
+from os import path
+from inspect import getfile, stack
+from threading import Thread, Lock
 
 
 class KVSError(Exception):
@@ -47,6 +48,7 @@ class KeyValueStore:
         self.__compr_lvl = compression_lvl or Z_DEFAULT_COMPRESSION
         self.__encoding = encoding
         self.__store = dict()
+        self.__lock = Lock()
 
     def __setitem__(self, key: Union[str, int, float, bytes], value: Union[str, bytes]) -> None:
         self.set(key, value)
