@@ -105,18 +105,21 @@ class KeyValueStore:
 
     def __dump(self):
         with self.__lock:
-            with open(path.join(self.__path, "{}.kvs".format(self.__db_name)), "bw") as file:
+            with open(path.join(self.__path, "{}.kvs".format(self.__db_name)), "w") as file:
                 for key, value in self.__store.items():
-                    file.write(compress(bytes("{}:{}".format(key.hex(), value.hex()), self.__encoding), Z_BEST_COMPRESSION).replace(bytes("\n", self.__encoding), bytes("\\n", self.__encoding)))
-                    file.write(bytes("\n", self.__encoding))
+                    file.write(key.hex() + ":" + value.hex() + "\n")
+        print("dumped")
 
     def dump(self):
         dump_thread = Thread(target=self.__dump)
         dump_thread.start()
 
-    def load(self):
-        with self.__lock:
-            with open(path.join(self.__path, "{}.kvs".format(self.__db_name)), "br") as file:
+    def __load(self):
+        try:
+            with open(path.join(self.__path, "{}.kvs".format(self.__db_name)), "r") as file:
                 for line in file:
-                    key, value = self.__decompress(line.replace(bytes("\\n", self.__encoding), bytes("\n", self.__encoding))).split(bytes(":", self.__encoding))
-                    self.__store[bytes.fromhex(str(key, self.__encoding))] = bytes.fromhex(str(value, self.__encoding))
+                    key, value = line.split(":")
+                    self.__store[bytes.fromhex(key)] = bytes.fromhex(value)
+            print("loaded")
+        except FileNotFoundError:
+            pass
