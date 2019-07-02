@@ -102,10 +102,13 @@ class KeyValueStore:
         size = 0
         for value in self.__store.values():
             size += len(value)
+        for key in self.__store.keys():
+            size += len(key)
         size = size / 1024
         attributes = [
-            ('keys', len(self.__store.keys())),
-            ('size', "{}KiB".format(round(size)))
+            ("name", self.__db_name),
+            ("keys", len(self.__store.keys())),
+            ("size", "{}KiB".format(round(size)))
         ]
         return "{}({})".format(__class__.__name__, ", ".join(["=".join([key, str(value)]) for key, value in attributes]))
 
