@@ -49,6 +49,7 @@ class KeyValueStore:
         self.__encoding = encoding
         self.__store = dict()
         self.__lock = Lock()
+        self.__load()
 
     def __compress(self, value: bytes) -> bytes:
         try:
