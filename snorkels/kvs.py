@@ -112,13 +112,20 @@ class KeyValueStore:
         ]
         return "{}({})".format(__class__.__name__, ", ".join(["=".join([key, str(value)]) for key, value in attributes]))
 
-    def dump(self, n, c=True):
-        with open(n, "ba") as file:
-            for key, value in self.__store.items():
-                file.write(pickleDumps((key, value)))
-        del file
+    def __dump(self):
+        with self.__lock:
+            with open(path.join(self.__path, "{}.kvs".format(self.__db_name)), "bw") as file:
+                for key, value in self.__store.items():
+                    file.write(compress(bytes("{}:{}".format(key.hex(), value.hex()), self.__encoding), Z_BEST_COMPRESSION).replace(bytes("\n", self.__encoding), bytes("\\n", self.__encoding)))
+                    file.write(bytes("\n", self.__encoding))
 
+    def dump(self):
+        dump_thread = Thread(target=self.__dump)
+        dump_thread.start()
 
     def load(self):
-        with open("test.kvs", "br") as file:
-            return pickleLoads(decompress(file.read()))
+        with self.__lock:
+            with open(path.join(self.__path, "{}.kvs".format(self.__db_name)), "br") as file:
+                for line in file:
+                    key, value = self.__decompress(line.replace(bytes("\\n", self.__encoding), bytes("\n", self.__encoding))).split(bytes(":", self.__encoding))
+                    self.__store[bytes.fromhex(str(key, self.__encoding))] = bytes.fromhex(str(value, self.__encoding))
