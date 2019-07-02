@@ -15,10 +15,13 @@
 """
 
 
-__all__ = ('validateType', )
+__all__ = ('validateStrOrByt',)
 
 
-def validateType(obj: object, name: str, types: tuple) -> None:
-    if not isinstance(obj, types):
+from typing import Union
+
+
+def validateStrOrByt(obj: object, name: str) -> None:
+    if not isinstance(obj, (str, bytes)):
         err = TypeError("invalid type '{}' for {}".format(type(obj).__name__, name))
         raise err
