@@ -1,7 +1,9 @@
 SNORKELS
 =======
 
-SNORKELS (compreSsed iN memORy KEy vaLue Store) is a lightweight in memory key-value store with on the fly compression for Python. 
+SNORKELS is a lightweight in memory key-value store with on the fly compression for Python.
+
+*(compreSsed iN memORy KEy vaLue Store)*
 
 ---
 
