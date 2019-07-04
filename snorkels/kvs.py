@@ -37,11 +37,33 @@ class KVSError(Exception):
 
 
 class SetError(KVSError):
-    pass
+    def __init__(self, key, ex, logger):
+        logger.error("Error setting value for key '{}' - {}".format(key.decode(), ex))
+        super().__init__(ex)
 
 
 class GetError(KVSError):
-    pass
+    def __init__(self, key, ex, logger):
+        logger.error("Error getting value for key '{}' - {}".format(key.decode(), ex))
+        super().__init__(ex)
+
+
+class DeleteError(KVSError):
+    def __init__(self, key, ex, logger):
+        logger.error("Error deleting key '{}' - {}".format(key.decode(), ex))
+        super().__init__(ex)
+
+
+class DumpError(KVSError):
+    def __init__(self, ex, logger):
+        logger.error("Error dumping to file - {}".format(ex))
+        super().__init__(ex)
+
+
+class LoadError(KVSError):
+    def __init__(self, ex, logger):
+        logger.error("Error loading from file - {}".format(ex))
+        super().__init__(ex)
 
 
 class CompressionLevel:
@@ -90,9 +112,10 @@ class KeyValueStore:
             value = bytes(value, self.__encoding)
         try:
             self.__store[key] = compress(value, self.__compr_lvl)
+        except MemoryError as ex:
+            raise SetError(key, ex, self.__logger)
         except ZLibError as ex:
-            self.__logger.error("Error setting value for key '{}' - compression failed - {}".format(key.decode(), ex))
-            raise SetError(ex)
+            raise SetError(key, ex, self.__logger)
 
     def get(self, key: Union[str, bytes]) -> bytes:
         validateStrOrByt(key, "key")
@@ -100,15 +123,19 @@ class KeyValueStore:
             key = bytes(key, self.__encoding)
         try:
             return decompress(self.__store[key])
+        except KeyError as ex:
+            raise GetError(key, ex.__class__.__name__, self.__logger)
         except ZLibError as ex:
-            self.__logger.error("Error getting value for key '{}' - decompression failed - {}".format(key.decode(), ex))
-            raise GetError(ex)
+            raise GetError(key, ex, self.__logger)
 
     def delete(self, key: Union[str, bytes]) -> None:
         validateStrOrByt(key, "key")
         if isinstance(key, str):
             key = bytes(key, self.__encoding)
-        del self.__store[key]
+        try:
+            del self.__store[key]
+        except KeyError as ex:
+            raise DeleteError(key, ex.__class__.__name__, self.__logger)
 
     def keys(self) -> List:
         return list(self.__store.keys())
@@ -122,13 +149,15 @@ class KeyValueStore:
 
     def __dump(self):
         with self.__lock:
-            with open(path.join(self.__path, "{}.kvs".format(self.__db_name)), "w") as file:
-                for key, value in self.__store.items():
-                    file.write(key.hex() + ":" + value.hex() + "\n")
-            self.__logger.info("Dumped data to '{}'".format(path.join(self.__path, "{}.kvs".format(self.__db_name))))
+            try:
+                with open(path.join(self.__path, "{}.kvs".format(self.__db_name)), "w") as file:
+                    for key, value in self.__store.items():
+                        file.write(key.hex() + ":" + value.hex() + "\n")
                 self.__logger.info(
                     "Dumped data to file '{}'".format(path.join(self.__path, "{}.kvs".format(self.__db_name)))
                 )
+            except IOError as ex:
+                raise DumpError(ex, self.__logger)
 
     def __load(self):
         try:
@@ -141,6 +170,9 @@ class KeyValueStore:
             )
         except FileNotFoundError:
             pass
+        except IOError as ex:
+            raise LoadError(ex, self.__logger)
+
 
     def __repr__(self):
         size = 0
