@@ -37,11 +37,11 @@ class KVSError(Exception):
     pass
 
 
-class CompressionError(KVSError):
+class SetError(KVSError):
     pass
 
 
-class DecompressionError(KVSError):
+class GetError(KVSError):
     pass
 
 
@@ -65,13 +65,21 @@ class KeyValueStore:
             key = bytes(key, self.__encoding)
         if isinstance(value, str):
             value = bytes(value, self.__encoding)
-        self.__store[key] = self.__compress(value)
+        try:
+            self.__store[key] = compress(value, self.__compr_lvl)
+        except ZLibError as ex:
+            self.__logger.error("Error setting value for key '{}' - compression failed - {}".format(key.decode(), ex))
+            raise SetError(ex)
 
     def get(self, key: Union[str, bytes]) -> bytes:
         validateStrOrByt(key, "key")
         if isinstance(key, str):
             key = bytes(key, self.__encoding)
-        return self.__decompress(self.__store[key])
+        try:
+            return decompress(self.__store[key])
+        except ZLibError as ex:
+            self.__logger.error("Error getting value for key '{}' - decompression failed - {}".format(key.decode(), ex))
+            raise GetError(ex)
 
     def delete(self, key: Union[str, bytes]) -> None:
         validateStrOrByt(key, "key")
@@ -105,18 +113,6 @@ class KeyValueStore:
             self.__logger.info("Loaded data from '{}'".format(path.join(self.__path, "{}.kvs".format(self.__db_name))))
         except FileNotFoundError:
             pass
-
-    def __compress(self, value: bytes) -> bytes:
-        try:
-            return compress(value, self.__compr_lvl)
-        except ZLibError as ex:
-            raise CompressionError(ex)
-
-    def __decompress(self, value: bytes) -> bytes:
-        try:
-            return decompress(value)
-        except ZLibError as ex:
-            raise DecompressionError(ex)
 
     def __repr__(self):
         size = 0
