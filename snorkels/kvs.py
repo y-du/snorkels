@@ -15,7 +15,17 @@
 """
 
 
-__all__ = ('KeyValueStore', 'KVSError', 'SetError', 'GetError', 'CompressionLevel', 'Encoding')
+__all__ = (
+    'KeyValueStore',
+    'CompressionLevel',
+    'Encoding',
+    'KVSError',
+    'SetError',
+    'GetError',
+    'DeleteError',
+    'DumpError',
+    'LoadError'
+)
 
 
 from .util import validateStrOrByt
@@ -172,7 +182,6 @@ class KeyValueStore:
             pass
         except IOError as ex:
             raise LoadError(ex, self.__logger)
-
 
     def __repr__(self):
         size = 0
