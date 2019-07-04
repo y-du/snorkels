@@ -126,6 +126,9 @@ class KeyValueStore:
                 for key, value in self.__store.items():
                     file.write(key.hex() + ":" + value.hex() + "\n")
             self.__logger.info("Dumped data to '{}'".format(path.join(self.__path, "{}.kvs".format(self.__db_name))))
+                self.__logger.info(
+                    "Dumped data to file '{}'".format(path.join(self.__path, "{}.kvs".format(self.__db_name)))
+                )
 
     def __load(self):
         try:
@@ -133,7 +136,9 @@ class KeyValueStore:
                 for line in file:
                     key, value = line.split(":")
                     self.__store[bytes.fromhex(key)] = bytes.fromhex(value)
-            self.__logger.info("Loaded data from '{}'".format(path.join(self.__path, "{}.kvs".format(self.__db_name))))
+            self.__logger.info(
+                "Loaded data from file '{}'".format(path.join(self.__path, "{}.kvs".format(self.__db_name)))
+            )
         except FileNotFoundError:
             pass
 
@@ -149,4 +154,6 @@ class KeyValueStore:
             ("keys", len(self.__store.keys())),
             ("size", "{}KiB".format(round(size)))
         ]
-        return "{}({})".format(__class__.__name__, ", ".join(["=".join([key, str(value)]) for key, value in attributes]))
+        return "{}({})".format(
+            __class__.__name__, ", ".join(["=".join([key, str(value)]) for key, value in attributes])
+        )
