@@ -15,13 +15,12 @@
 """
 
 
-__all__ = ('KeyValueStore', 'KVSError', 'CompressionError', 'DecompressionError')
+__all__ = ('KeyValueStore', 'KVSError', 'SetError', 'GetError', 'CompressionLevel', 'Encoding')
 
 
 from .util import validateStrOrByt
 from typing import Union, List
-from zlib import compress, decompress
-from zlib import Z_DEFAULT_COMPRESSION as DEFAULT_LVL
+from zlib import compress, decompress, Z_DEFAULT_COMPRESSION, Z_NO_COMPRESSION, Z_BEST_COMPRESSION, Z_BEST_SPEED
 from zlib import error as ZLibError
 from os import path
 from inspect import getfile, stack
@@ -45,8 +44,27 @@ class GetError(KVSError):
     pass
 
 
+class CompressionLevel:
+    default = Z_DEFAULT_COMPRESSION
+    none = Z_NO_COMPRESSION
+    minimal = Z_BEST_SPEED
+    very_low = 2
+    low = 3
+    medium_low = 4
+    medium = 5
+    medium_high = 6
+    high = 7
+    very_high = 8
+    maximum = Z_BEST_COMPRESSION
+
+
+class Encoding:
+    utf_8 = "UTF-8"
+    ascii = "ASCII"
+
+
 class KeyValueStore:
-    def __init__(self, db_name: str, user_path: str = None, compression_lvl: int = DEFAULT_LVL, encoding: str = "UTF-8"):
+    def __init__(self, db_name: str, user_path: str = None, compression_lvl: int = CompressionLevel.default, encoding: str = Encoding.utf_8):
         if not all((isinstance(db_name, str), isinstance(user_path, (str, type(None))), isinstance(compression_lvl, (int, type(None))), isinstance(encoding, str))):
             raise TypeError
         self.__db_name = db_name
