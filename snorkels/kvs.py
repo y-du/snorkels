@@ -65,7 +65,12 @@ class Encoding:
 
 class KeyValueStore:
     def __init__(self, db_name: str, user_path: str = None, compression_lvl: int = CompressionLevel.default, encoding: str = Encoding.utf_8):
-        if not all((isinstance(db_name, str), isinstance(user_path, (str, type(None))), isinstance(compression_lvl, (int, type(None))), isinstance(encoding, str))):
+        if not all((
+                isinstance(db_name, str),
+                isinstance(user_path, (str, type(None))),
+                isinstance(compression_lvl, (int, type(None))),
+                isinstance(encoding, str)
+        )):
             raise TypeError
         self.__db_name = db_name
         self.__path = user_path if user_path else path.abspath(path.split(getfile(stack()[-1].frame))[0])
