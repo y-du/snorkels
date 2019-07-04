@@ -96,6 +96,8 @@ class Encoding:
 
 
 class KeyValueStore:
+    __extension = "kvs"
+
     def __init__(self, db_name: str, user_path: str = None, compression_lvl: int = CompressionLevel.default, encoding: str = Encoding.utf_8):
         if not all((
                 isinstance(db_name, str),
@@ -160,23 +162,27 @@ class KeyValueStore:
     def __dump(self):
         with self.__lock:
             try:
-                with open(path.join(self.__path, "{}.kvs".format(self.__db_name)), "w") as file:
+                with open(path.join(self.__path, "{}.{}".format(self.__db_name, __class__.__extension)), "w") as file:
                     for key, value in self.__store.items():
                         file.write(key.hex() + ":" + value.hex() + "\n")
                 self.__logger.info(
-                    "Dumped data to file '{}'".format(path.join(self.__path, "{}.kvs".format(self.__db_name)))
+                    "Dumped data to file '{}'".format(
+                        path.join(self.__path, "{}.{}".format(self.__db_name, __class__.__extension))
+                    )
                 )
             except IOError as ex:
                 raise DumpError(ex, self.__logger)
 
     def __load(self):
         try:
-            with open(path.join(self.__path, "{}.kvs".format(self.__db_name)), "r") as file:
+            with open(path.join(self.__path, "{}.{}".format(self.__db_name, __class__.__extension)), "r") as file:
                 for line in file:
                     key, value = line.split(":")
                     self.__store[bytes.fromhex(key)] = bytes.fromhex(value)
             self.__logger.info(
-                "Loaded data from file '{}'".format(path.join(self.__path, "{}.kvs".format(self.__db_name)))
+                "Loaded data from file '{}'".format(
+                    path.join(self.__path, "{}.{}".format(self.__db_name, __class__.__extension))
+                )
             )
         except FileNotFoundError:
             pass
