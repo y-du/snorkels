@@ -17,7 +17,7 @@
 
 __all__ = (
     'KeyValueStore',
-    'CompressionLevel',
+    'CompLevel',
     'Encoding',
     'KVSError',
     'SetError',
@@ -76,7 +76,7 @@ class LoadError(KVSError):
         super().__init__(ex)
 
 
-class CompressionLevel:
+class CompLevel:
     default = Z_DEFAULT_COMPRESSION
     none = Z_NO_COMPRESSION
     minimal = Z_BEST_SPEED
@@ -98,17 +98,17 @@ class Encoding:
 class KeyValueStore:
     __extension = "kvs"
 
-    def __init__(self, db_name: str, user_path: str = None, compression_lvl: int = CompressionLevel.default, encoding: str = Encoding.utf_8):
+    def __init__(self, db_name: str, user_path: str = None, comp_lvl: int = CompLevel.default, encoding: str = Encoding.utf_8):
         if not all((
                 isinstance(db_name, str),
                 isinstance(user_path, (str, type(None))),
-                isinstance(compression_lvl, (int, type(None))),
+                isinstance(comp_lvl, (int, type(None))),
                 isinstance(encoding, str)
         )):
             raise TypeError
         self.__db_name = db_name
         self.__path = user_path if user_path else path.abspath(path.split(getfile(stack()[-1].frame))[0])
-        self.__compr_lvl = compression_lvl
+        self.__comp_lvl = comp_lvl
         self.__encoding = encoding
         self.__store = dict()
         self.__lock = Lock()
@@ -123,7 +123,7 @@ class KeyValueStore:
         if isinstance(value, str):
             value = bytes(value, self.__encoding)
         try:
-            self.__store[key] = compress(value, self.__compr_lvl)
+            self.__store[key] = compress(value, self.__comp_lvl)
         except MemoryError as ex:
             raise SetError(key, ex, self.__logger)
         except ZLibError as ex:
