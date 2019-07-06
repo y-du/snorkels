@@ -22,7 +22,9 @@ Description
 
 Quick start
 ---
-
+    kvs = KeyValueStore(db_name="my_db")
+    
+    
 
 Requirements
 ----
