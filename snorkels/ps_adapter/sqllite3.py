@@ -42,7 +42,9 @@ class SQLlite3Adapter(Interface):
 
     def create(self, key, value):
         with sqlliteConnect(self.__db_path) as conn:
-            conn.execute("INSERT INTO {}_kvs (key, value) VALUES (?, ?)".format(self.__db_name), (key, value))
+            conn.execute(
+                "INSERT INTO {}_kvs (key, value) VALUES (?, ?)".format(self.__db_name), (str(key, "UTF-8"), value)
+            )
         conn.close()
 
     def readItems(self):
@@ -53,12 +55,12 @@ class SQLlite3Adapter(Interface):
 
     def update(self, key, value):
         with sqlliteConnect(self.__db_path) as conn:
-            conn.execute("UPDATE {}_kvs SET value=(?) WHERE key=(?)".format(self.__db_name), (value, key))
+            conn.execute("UPDATE {}_kvs SET value=(?) WHERE key=(?)".format(self.__db_name), (value, str(key, "UTF-8")))
         conn.close()
 
     def delete(self, key):
         with sqlliteConnect(self.__db_path) as conn:
-            conn.execute("DELETE FROM {}_kvs WHERE key=(?)".format(self.__db_name), (key, ))
+            conn.execute("DELETE FROM {}_kvs WHERE key=(?)".format(self.__db_name), (str(key, "UTF-8"), ))
         conn.close()
 
     def clear(self):
@@ -105,7 +107,9 @@ class SQLlite3ThreadAdapter(Interface):
                 pass
 
     def create(self, key, value):
-        self.__query_queue.put(("INSERT INTO {}_kvs (key, value) VALUES (?, ?)".format(self.__db_name), (key, value)))
+        self.__query_queue.put(
+            ("INSERT INTO {}_kvs (key, value) VALUES (?, ?)".format(self.__db_name), (str(key, "UTF-8"), value))
+        )
 
     def readItems(self):
         with sqlliteConnect(self.__db_path) as conn:
@@ -114,10 +118,12 @@ class SQLlite3ThreadAdapter(Interface):
         conn.close()
 
     def update(self, key, value):
-        self.__query_queue.put(("UPDATE {}_kvs SET value=(?) WHERE key=(?)".format(self.__db_name), (value, key)))
+        self.__query_queue.put(
+            ("UPDATE {}_kvs SET value=(?) WHERE key=(?)".format(self.__db_name), (value, str(key, "UTF-8")))
+        )
 
     def delete(self, key):
-        self.__query_queue.put(("DELETE FROM {}_kvs WHERE key=(?)".format(self.__db_name), (key, )))
+        self.__query_queue.put(("DELETE FROM {}_kvs WHERE key=(?)".format(self.__db_name), (str(key, "UTF-8"), )))
 
     def clear(self):
         with sqlliteConnect(self.__db_path) as conn:
