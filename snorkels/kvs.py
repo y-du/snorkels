@@ -28,8 +28,9 @@ __all__ = (
 )
 
 
+from .ps_adapter import Interface
 from .util import validateStrOrByt
-from typing import Union, List
+from typing import Union, List, Optional
 from zlib import compress, decompress, Z_DEFAULT_COMPRESSION, Z_NO_COMPRESSION, Z_BEST_COMPRESSION, Z_BEST_SPEED
 from zlib import error as ZLibError
 from os import path
@@ -98,21 +99,24 @@ class Encoding:
 class KeyValueStore:
     __extension = "kvs"
 
-    def __init__(self, db_name: str, user_path: str = None, comp_lvl: int = CompLevel.default, encoding: str = Encoding.utf_8):
+    def __init__(self, name: str, comp_lvl: int = CompLevel.default, encoding: str = Encoding.utf_8, ps_adapter: Optional[Interface] = None):
         if not all((
-                isinstance(db_name, str),
-                isinstance(user_path, (str, type(None))),
+                isinstance(name, str),
                 isinstance(comp_lvl, (int, type(None))),
-                isinstance(encoding, str)
+                isinstance(encoding, str),
+                isinstance(ps_adapter, (Interface, type(None)))
         )):
             raise TypeError
-        self.__db_name = db_name
-        self.__path = user_path if user_path else path.abspath(path.split(getfile(stack()[-1].frame))[0])
+        self.__name = name
         self.__comp_lvl = comp_lvl
         self.__encoding = encoding
+        self.__ps_adapter = ps_adapter
         self.__store = dict()
         self.__lock = Lock()
-        self.__logger = _root_logger.getChild(self.__db_name)
+        self.__logger = _root_logger.getChild(self.__name)
+        if self.__ps_adapter:
+            for key, value in self.__ps_adapter.readItems():
+                self.__store[key] = value
 
     def set(self, key: Union[str, bytes], value: Union[str, bytes]) -> None:
         validateStrOrByt(key, "key")
@@ -122,7 +126,13 @@ class KeyValueStore:
         if isinstance(value, str):
             value = bytes(value, self.__encoding)
         try:
-            self.__store[key] = compress(value, self.__comp_lvl)
+            value = compress(value, self.__comp_lvl)
+            if self.__ps_adapter:
+                if key not in self.__store:
+                    self.__ps_adapter.create(key=key, value=value)
+                else:
+                    self.__ps_adapter.update(key=key, value=value)
+            self.__store[key] = value
         except MemoryError as ex:
             raise SetError(key, ex, self.__logger)
         except ZLibError as ex:
@@ -145,6 +155,8 @@ class KeyValueStore:
             key = bytes(key, self.__encoding)
         try:
             del self.__store[key]
+            if self.__ps_adapter:
+                self.__ps_adapter.delete(key)
         except KeyError as ex:
             raise DeleteError(key, ex.__class__.__name__, self.__logger)
 
@@ -153,6 +165,8 @@ class KeyValueStore:
 
     def clear(self) -> None:
         self.__store.clear()
+        if self.__ps_adapter:
+            self.__ps_adapter.clear()
 
     def __repr__(self):
         size = 0
@@ -162,7 +176,7 @@ class KeyValueStore:
             size += len(key)
         size = size / 1024
         attributes = [
-            ("name", self.__db_name),
+            ("name", self.__name),
             ("keys", len(self.__store.keys())),
             ("size", "{}KiB".format(round(size)))
         ]
