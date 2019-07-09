@@ -113,7 +113,6 @@ class KeyValueStore:
         self.__store = dict()
         self.__lock = Lock()
         self.__logger = _root_logger.getChild(self.__db_name)
-        self.__load()
 
     def set(self, key: Union[str, bytes], value: Union[str, bytes]) -> None:
         validateStrOrByt(key, "key")
@@ -154,40 +153,6 @@ class KeyValueStore:
 
     def clear(self) -> None:
         self.__store.clear()
-
-    def dump(self):
-        dump_thread = Thread(target=self.__dump)
-        dump_thread.start()
-
-    def __dump(self):
-        with self.__lock:
-            try:
-                with open(path.join(self.__path, "{}.{}".format(self.__db_name, __class__.__extension)), "w") as file:
-                    for key, value in self.__store.items():
-                        file.write(key.hex() + ":" + value.hex() + "\n")
-                self.__logger.info(
-                    "Dumped data to file '{}'".format(
-                        path.join(self.__path, "{}.{}".format(self.__db_name, __class__.__extension))
-                    )
-                )
-            except IOError as ex:
-                raise DumpError(ex, self.__logger)
-
-    def __load(self):
-        try:
-            with open(path.join(self.__path, "{}.{}".format(self.__db_name, __class__.__extension)), "r") as file:
-                for line in file:
-                    key, value = line.split(":")
-                    self.__store[bytes.fromhex(key)] = bytes.fromhex(value)
-            self.__logger.info(
-                "Loaded data from file '{}'".format(
-                    path.join(self.__path, "{}.{}".format(self.__db_name, __class__.__extension))
-                )
-            )
-        except FileNotFoundError:
-            pass
-        except IOError as ex:
-            raise LoadError(ex, self.__logger)
 
     def __repr__(self):
         size = 0
