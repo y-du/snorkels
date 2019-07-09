@@ -24,6 +24,7 @@ __copyright__ = 'Copyright (c) 2019 Yann Dumont'
 
 
 from .kvs import *
+import snorkels.ps_adapter
 
 __all__ = (
     kvs.__all__
