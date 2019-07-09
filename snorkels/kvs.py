@@ -18,7 +18,6 @@
 __all__ = (
     'KeyValueStore',
     'CompLevel',
-    'Encoding',
     'KVSError',
     'SetError',
     'GetError',
@@ -33,9 +32,7 @@ from .util import validateStrOrByt
 from typing import Union, List, Optional
 from zlib import compress, decompress, Z_DEFAULT_COMPRESSION, Z_NO_COMPRESSION, Z_BEST_COMPRESSION, Z_BEST_SPEED
 from zlib import error as ZLibError
-from os import path
-from inspect import getfile, stack
-from threading import Thread, Lock
+from threading import Lock
 from logging import getLogger
 
 
@@ -91,40 +88,37 @@ class CompLevel:
     maximum = Z_BEST_COMPRESSION
 
 
-class Encoding:
-    utf_8 = "UTF-8"
-    ascii = "ASCII"
-
-
 class KeyValueStore:
-    __extension = "kvs"
+    __encoding = "UTF-8"
 
-    def __init__(self, name: str, comp_lvl: int = CompLevel.default, encoding: str = Encoding.utf_8, ps_adapter: Optional[Interface] = None):
+    def __init__(self, name: str, comp_lvl: int = CompLevel.default, ps_adapter: Optional[Interface] = None):
         if not all((
                 isinstance(name, str),
                 isinstance(comp_lvl, (int, type(None))),
-                isinstance(encoding, str),
                 isinstance(ps_adapter, (Interface, type(None)))
         )):
             raise TypeError
         self.__name = name
         self.__comp_lvl = comp_lvl
-        self.__encoding = encoding
         self.__ps_adapter = ps_adapter
         self.__store = dict()
         self.__lock = Lock()
         self.__logger = _root_logger.getChild(self.__name)
         if self.__ps_adapter:
             for key, value in self.__ps_adapter.readItems():
+                if isinstance(key, str):
+                    key = bytes(key, __class__.__encoding)
+                if isinstance(value, str):
+                    value = bytes(value, __class__.__encoding)
                 self.__store[key] = value
 
     def set(self, key: Union[str, bytes], value: Union[str, bytes]) -> None:
         validateStrOrByt(key, "key")
         validateStrOrByt(value, "value")
         if isinstance(key, str):
-            key = bytes(key, self.__encoding)
+            key = bytes(key, __class__.__encoding)
         if isinstance(value, str):
-            value = bytes(value, self.__encoding)
+            value = bytes(value, __class__.__encoding)
         try:
             value = compress(value, self.__comp_lvl)
             if self.__ps_adapter:
@@ -141,7 +135,7 @@ class KeyValueStore:
     def get(self, key: Union[str, bytes]) -> bytes:
         validateStrOrByt(key, "key")
         if isinstance(key, str):
-            key = bytes(key, self.__encoding)
+            key = bytes(key, __class__.__encoding)
         try:
             return decompress(self.__store[key])
         except KeyError as ex:
@@ -152,7 +146,7 @@ class KeyValueStore:
     def delete(self, key: Union[str, bytes]) -> None:
         validateStrOrByt(key, "key")
         if isinstance(key, str):
-            key = bytes(key, self.__encoding)
+            key = bytes(key, __class__.__encoding)
         try:
             del self.__store[key]
             if self.__ps_adapter:
