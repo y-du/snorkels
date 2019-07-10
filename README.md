@@ -22,7 +22,13 @@ Description
 
 Quick start
 ---
-    kvs = KeyValueStore(db_name="my_db")
+    import snorkels
+    
+    kvs = snorkels.KeyValueStore(name="test")
+    
+    kvs.set("key_a", "some data")
+    value = kvs.get("key_a")
+    kvs.delete("key_a")
     
     
 
