@@ -13,7 +13,7 @@ SNORKELS is a lightweight in memory key-value store with on the fly compression 
 + [Installation](#installation)
 + [Usage](#usage)
     + [Creating a key-value store](#creating-a-key-value-store)
-    + [Setting, getting and deleting values](#setting,-getting-and-deleting-values)
+    + [Setting, getting and deleting values](#setting-getting-and-deleting-values)
     + [Compression levels](#compression-levels)
     + [Adding persistence](#adding-persistence)
     + [Logging](#logging)
