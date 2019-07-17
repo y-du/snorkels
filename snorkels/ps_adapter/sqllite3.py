@@ -15,7 +15,7 @@
 """
 
 
-__all__ = ('SQLlite3Adapter', 'SQLlite3ThreadAdapter')
+__all__ = ('SQLlite3Adapter', )
 
 
 from .interface import Interface
@@ -23,8 +23,6 @@ from os import path
 from inspect import getfile, stack
 from typing import Optional
 from sqlite3 import connect as sqlliteConnect
-from threading import Thread
-from queue import Queue, Empty
 
 
 class SQLlite3Adapter(Interface):
