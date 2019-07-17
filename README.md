@@ -154,9 +154,9 @@ To create your own adapter please use the provided interface:
 
 If your project uses the python `logging` facility you can combine the output produced by `snorkels` with your log output.
 
-Retrieve the "simple-conf" logger via:
+Retrieve the "snorkels" logger via:
 
-    logger = logging.getLogger("simple-conf")
+    logger = logging.getLogger("snorkels")
 
 Add your handler to the logger and Optionally set the desired level:
 
