@@ -21,9 +21,7 @@ __all__ = (
     'KVSError',
     'SetError',
     'GetError',
-    'DeleteError',
-    'DumpError',
-    'LoadError'
+    'DeleteError'
 )
 
 
@@ -59,18 +57,6 @@ class GetError(KVSError):
 class DeleteError(KVSError):
     def __init__(self, key, ex, logger):
         logger.error("Error deleting key '{}' - {}".format(key.decode(), ex))
-        super().__init__(ex)
-
-
-class DumpError(KVSError):
-    def __init__(self, ex, logger):
-        logger.error("Error dumping to file - {}".format(ex))
-        super().__init__(ex)
-
-
-class LoadError(KVSError):
-    def __init__(self, ex, logger):
-        logger.error("Error loading from file - {}".format(ex))
         super().__init__(ex)
 
 
