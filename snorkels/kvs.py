@@ -30,7 +30,6 @@ from .util import validateStrOrByt
 from typing import Union, List, Optional
 from zlib import compress, decompress, Z_DEFAULT_COMPRESSION, Z_NO_COMPRESSION, Z_BEST_COMPRESSION, Z_BEST_SPEED
 from zlib import error as ZLibError
-from threading import Lock
 from logging import getLogger
 
 
@@ -88,7 +87,6 @@ class KeyValueStore:
         self.__comp_lvl = comp_lvl
         self.__ps_adapter = ps_adapter
         self.__store = dict()
-        self.__lock = Lock()
         self.__logger = _root_logger.getChild(self.__name)
         if self.__ps_adapter:
             for key, value in self.__ps_adapter.readItems():
