@@ -7,7 +7,6 @@ SNORKELS is a lightweight in memory key-value store with on the fly compression 
 
 ---
 
-+ [Description](#description)
 + [Quick start](#quick-start)
 + [Requirements](#requirements)
 + [Installation](#installation)
@@ -108,7 +107,7 @@ Clear key-value store:
 
 #### Compression levels
 
-For compression `snorkels` uses the python `zlib` module. By default the `zlib` module provides different compression levels. Theses levels can be accessed via `CompLevel`:
+For compression `snorkels` uses the python `zlib` module. By default the `zlib` module provides different compression levels. These levels can be accessed via `CompLevel`:
 
     snorkels.CompLevel.default
     snorkels.CompLevel.none
