@@ -1,7 +1,7 @@
 SNORKELS
 =======
 
-SNORKELS is a lightweight in memory key-value store with on the fly compression for Python.
+SNORKELS is a lightweight in memory key-value store with on the fly compression.
 
 *(compreSsed iN memORy KEy vaLue Store)*
 
@@ -16,6 +16,7 @@ SNORKELS is a lightweight in memory key-value store with on the fly compression 
     + [Compression levels](#compression-levels)
     + [Adding persistence](#adding-persistence)
     + [Logging](#logging)
+    + [Exceptions](#exceptions)
 
 ---
 
@@ -135,19 +136,19 @@ To create your own adapter please use the provided interface:
 
     class MyAdapter(snorkels.ps_adapter.Interface):
         def create(self, key, value):
-            # your code
+            # save a key-value pair to the database
 
         def readItems(self):
-            # your code
+            # generator function that yields all stored key-value pairs one by one
     
         def update(self, key, value):
-            # your code
+            # update the value of a key stored in the database
     
         def delete(self, key):
-            # your code
+            # delete a key-value pair from the database
     
         def clear(self):
-            # your code
+            # remove all key-value pairs from the database
 
 #### Logging
 
@@ -161,3 +162,13 @@ Add your handler to the logger and Optionally set the desired level:
 
     logger.addHandler(your_handler)
     logger.setLevel(logging.INFO)   # optional
+
+#### Exceptions
+
+- `SetError` will be raised if a key-value pair can't be set.
+
+- `GetError` will be raised if a value can't be retrieved.
+
+- `DeleteError` will be raised if a key-value pair can't be removed.
+
+All of the above exceptions are derived from `KVSError`.
