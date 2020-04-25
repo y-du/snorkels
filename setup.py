@@ -29,7 +29,7 @@ def read_metadata(file):
     return metadata
 
 
-metadata = read_metadata('simple_conf/__init__.py')
+metadata = read_metadata('snorkels/__init__.py')
 
 
 setuptools.setup(
